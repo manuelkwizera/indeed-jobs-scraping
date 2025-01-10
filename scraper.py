@@ -1,36 +1,80 @@
 import requests
-import os
-import random
+import csv
 import time
-from dotenv import load_dotenv
 
-load_dotenv()
-api_token = os.getenv('API_TOKEN')
+API_KEY = "011dbeba182b9daa6c7999b5b82e8ae611335a0d50c48b0ff9b3143557cfa3ee"
+DATASET_ID = "gd_l4dx9j9sscpvs7no2"
 
-url = "https://api.brightdata.com/request" # the endpoint for proxy based scripting
-
-payload = {
-    "zone": "mobile_proxy1",  # proxy zone
-    "url": "https://www.indeed.com/jobs?q=python&l=Texas",  # query parameter we will update later to make it dynamic
-    "format": "raw"  # raw htm content
-}
-
-headers = {
-    "Authorization": f'Bearer {api_token}', # api token
-    "Content-Type": "application/json",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # Simulate a browser
-}
-
-def fetch_data():
-    try:
-        response = requests.request("POST", url, json=payload, headers=headers)
-        if response.status_code == 200:
-            print("Request successful. Data retrieved:")
-            print(response.text)  # html data
-        else:
-            print(f"Error: {response.status_code}, {response.text}")
+def trigger_brightdata_dataset():
+    url = "https://api.brightdata.com/datasets/v3/trigger"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
     
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
+    data = [
+        {"url": "https://de.indeed.com/jobs?q=python+developer&l=Germany"},
+    ]
+    
+    params = {
+        "dataset_id": DATASET_ID,
+        "include_errors": "true",
+        "type": "discover_new",
+        "discover_by": "url"
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, params=params)
+        if response.status_code == 200:
+            print("Dataset Trigger Success:", response.json())
+            return response.json().get("snapshot_id")  # Return the snapshot_id
+        else:
+            print(f"Dataset Trigger Error: {response.status_code}")
+            print(response.text)
+    except requests.RequestException as e:
+        print("An error occurred during dataset trigger:", e)
+    return None  # Return None if there's an error
 
-fetch_data()
+def fetch_and_save_data(snapshot_id, retries=5, delay=10):
+    if not snapshot_id:
+        print("Invalid snapshot ID. Cannot fetch data.")
+        return
+    
+    url = f"https://api.brightdata.com/datasets/v3/snapshot/{snapshot_id}"
+    querystring = {"format": "json", "batch_size": "1000"}
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, headers=headers, params=querystring)
+            print("Snapshot Fetch Status Code:", response.status_code)
+
+            if response.status_code == 200:
+                data = response.json()
+                with open("response_data.csv", "w", newline="", encoding="utf-8") as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    if isinstance(data, list) and len(data) > 0:
+                        csv_writer.writerow(data[0].keys())  
+                        for item in data:
+                            csv_writer.writerow(item.values())
+
+                print("Data successfully saved to response_data.csv")
+                return  # Exit after successfully saving the data
+            else:
+                error_data = response.json()
+                if error_data.get("status") == "running" and "Snapshot is not ready yet" in error_data.get("message", ""):
+                    print(f"Snapshot not ready yet. Attempt {attempt + 1}/{retries}. Retrying in {delay} seconds...")
+                    print("API Error:", response.text)
+                    time.sleep(delay)
+                else:
+                    print("Error fetching snapshot:", response.text)
+                    break
+        except requests.exceptions.RequestException as e:
+            print("Request Error during data fetch:", e)
+            break
+
+    print("Failed to fetch data after retries.")
+
+# Trigger the dataset and fetch the data
+snapshot_id = trigger_brightdata_dataset()
+fetch_and_save_data(snapshot_id)
