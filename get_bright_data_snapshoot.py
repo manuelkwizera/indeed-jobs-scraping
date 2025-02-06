@@ -1,8 +1,8 @@
 import requests
 import csv
 
-SNAPSHOT_ID = "s_m5qkzgtg1cufapv8l5"
-API_KEY = "011dbeba182b9daa6c7999b5b82e8ae611335a0d50c48b0ff9b3143557cfa3ee"
+SNAPSHOT_ID = "s_m6swrpfd11ff5rx4ml"
+API_KEY = "c3d1bd8fa8846d4270bb348ecbd8f6876d16aa0e5e3eb04fb4fa432ae0653de6"
 
 
 def fetch_and_save_data():

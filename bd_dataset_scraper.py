@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = "011dbeba182b9daa6c7999b5b82e8ae611335a0d50c48b0ff9b3143557cfa3ee"
+API_KEY = "c3d1bd8fa8846d4270bb348ecbd8f6876d16aa0e5e3eb04fb4fa432ae0653de6"
 DATASET_ID = "gd_l4dx9j9sscpvs7no2"
 
 def trigger_brightdata_dataset():    

@@ -19,7 +19,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 
 option= webdriver.ChromeOptions()
-option.add_argument("--incognito") # scrawl in the undercover
+option.add_argument("--incognito") # scrawl in incognito
 
 # Define job and location search keywords
 job_search_keyword = ['Data+Scientist', 'Business+Analyst', 'Data+Engineer', 
@@ -32,7 +32,6 @@ location_search_keyword = ['Berlin', 'Dortmund', 'Kassel']
 # Finding location, position, radius=35 miles, sort by date and starting page
 paginaton_url = 'https://www.indeed.com/jobs?q={}&l={}&radius=35&filter=0&sort=date&start={}'
 
-#print(paginaton_url)
 
 start = time.time()
 
@@ -59,6 +58,4 @@ sleep(randint(2, 6))
 
 driver.quit() # Closing the browser we opened
 
-
-end = time.time()
 
